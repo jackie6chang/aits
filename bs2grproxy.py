@@ -25,6 +25,8 @@ class BS2GRProxy(webapp.RequestHandler):
         return
 
     def process(self, allow_cache = True):
+        ## JCC: no cache for testing
+        allow_cache = False
         try:
             config = BS2GRPConfig.get_config()
 
@@ -194,11 +196,23 @@ class BS2GRProxy(webapp.RequestHandler):
         textContent = True
         for header in resp.headers:
             if header.strip().lower() in self.IgnoreHeaders:
+                logging.info("Ignoring header '%s' of %s" % (header, resp.headers[header]))
+                continue
+            ### JCC: keep session cookie
+            if header.strip().lower() == 'set-cookie':
+                logging.info("got cookie header '%s' of %s" % (header, resp.headers[header]))
+                ### JCC: non-weekday-comma means concatenation of 'Set-Cookie' headers
+                cookies = re.split(r'(?<!Sun|Mon|Tue|Wed|Thu|Fri|Sat), ', resp.headers[header])
+                for cookie in cookies:
+                    self.response.headers.add_header('Set-Cookie', cookie)
+                    logging.info("set cookie '%s' to be : %s" % (header, cookie))
                 continue
 
             self.response.headers[header] = resp.headers[header]
 
-        self.response.out.write(resp.content)
+        ### JCC: replace TARGET_HOST with my hostname (from user request)
+        import bs2grpconfig
+        self.response.out.write(resp.content.replace(bs2grpconfig.TARGET_HOST, self.request.url.split('//')[1].split('/')[0]))
 
     def post(self):
         return self.process(False)
