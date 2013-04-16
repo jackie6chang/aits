@@ -9,7 +9,8 @@ import re
 
 # You can set them later directly in Database
 # HTML target url
-TARGET_HOST = "www.martby.cn"
+#TARGET_HOST = "www.remobo.com"
+TARGET_HOST = "itunesconnect.apple.com"
 # Cache check option. value can be 'EOD' or 0 <= number.
 # EOD: start checking after the end of the day (So 1 time per day)
 # 0: Check every time
