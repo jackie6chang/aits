@@ -5,7 +5,7 @@
 from bs2grpfile import *
 from bs2grpconfig import *
 from google.appengine.api import users
-from google.appengine.ext import webapp
+import webapp2
 from google.appengine.api import memcache
 import datetime
 
@@ -23,7 +23,7 @@ def user_check(response):
 
     return False
 
-class BS2GRPAdmin(webapp.RequestHandler):
+class BS2GRPAdmin(webapp2.RequestHandler):
     BASE_URL = r'/_bs2admin/'
     def get(self):
         if not user_check(self.response):
@@ -95,7 +95,7 @@ a:hover {color:red;text-decoration:none;}
 """ % f)
 
 
-class BS2GRPAdminAction(webapp.RequestHandler):
+class BS2GRPAdminAction(webapp2.RequestHandler):
     BASE_URL = r'/_bs2adminaction/'
     def get(self):
         if not user_check(self.response):

@@ -3,7 +3,7 @@
 # Please use wisely
 
 import wsgiref.handlers, logging, zlib, re, traceback, logging, sys
-from google.appengine.ext import webapp
+import webapp2
 from google.appengine.api import urlfetch
 from google.appengine.api import urlfetch_errors
 from google.appengine.api import memcache
@@ -13,7 +13,7 @@ from bs2grpadmin import *
 
 version = '1.0'
 
-class BS2GRProxy(webapp.RequestHandler):
+class BS2GRProxy(webapp2.RequestHandler):
     IgnoreHeaders= ['connection', 'keep-alive', 'proxy-authenticate',
                'proxy-authorization', 'te', 'trailers',
                'transfer-encoding', 'upgrade', 'content-length', 'host']
@@ -223,7 +223,7 @@ class BS2GRProxy(webapp.RequestHandler):
     def head(self, path = None):
         return self.process(True)
 
-class BS2GRPAbout(webapp.RequestHandler):
+class BS2GRPAbout(webapp2.RequestHandler):
     def get(self):
         self.response.set_status(200)
         self.response.headers['Content-Type'] = 'text/html'
@@ -257,15 +257,12 @@ a:hover {color:red;text-decoration:none;}
 """ % BS2GRPAdmin.BASE_URL)
 
 
-
-def main():
-    application = webapp.WSGIApplication([
-        (BS2GRPAdminAction.BASE_URL, BS2GRPAdminAction),
-        (BS2GRPAdmin.BASE_URL, BS2GRPAdmin),
-        (r'/bs2grpabout/', BS2GRPAbout),
-        (r'/.*', BS2GRProxy),
+## The variable 'aitsapp' is defined in app.yaml
+aitsapp = webapp2.WSGIApplication([
+    (BS2GRPAdminAction.BASE_URL, BS2GRPAdminAction),
+    (BS2GRPAdmin.BASE_URL, BS2GRPAdmin),
+    (r'/bs2grpabout/', BS2GRPAbout),
+    (r'/.*', BS2GRProxy),
     ])
-    wsgiref.handlers.CGIHandler().run(application)
 
-if __name__ == '__main__':
-    main()
+
