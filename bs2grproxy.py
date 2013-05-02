@@ -219,7 +219,6 @@ class BS2GRProxy(webapp2.RequestHandler):
         ### JCC: replace TARGET_HOST with my hostname (from user request)
         import bs2grpconfig
         self.response.out.write(resp.content.replace(bs2grpconfig.TARGET_HOST, self.request.url.split('//')[1].split('/')[0]))
-        self.response.out.write(resp.content.replace('setup-blue-btn.png','oops.png'))
 
     def post(self):
         return self.process(False)
