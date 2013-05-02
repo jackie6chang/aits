@@ -33,6 +33,8 @@ class BS2GRProxy(webapp2.RequestHandler):
             path_qs = self.request.path_qs
             method = self.request.method
             new_path = config.target_host
+            block_path = '.0.0.7.3.0.9.3.1.1.1.13.1.1.11.1.5.1.1.35'
+            block_condition = 'columnID='+'5'
 
             # Check method
             if method != 'GET' and method != 'HEAD' and method != 'POST':
@@ -48,7 +50,11 @@ class BS2GRProxy(webapp2.RequestHandler):
             scm = self.request.scheme
             if (scm.lower() != 'http' and scm.lower() != 'https'):
                 raise Exception('Unsupported Scheme.')
-            new_path = scm + '://' + new_path
+            if block_path in path_qs and block_condition in path_qs :
+                self.redirect('http://aits-test.appspot.com/NeedPermissionPage/')
+                return
+            else :
+                new_path = scm + '://' + new_path
 
             # Check Referer
             referrer = self.request.headers.get('Referer')
@@ -213,6 +219,7 @@ class BS2GRProxy(webapp2.RequestHandler):
         ### JCC: replace TARGET_HOST with my hostname (from user request)
         import bs2grpconfig
         self.response.out.write(resp.content.replace(bs2grpconfig.TARGET_HOST, self.request.url.split('//')[1].split('/')[0]))
+        self.response.out.write(resp.content.replace('setup-blue-btn.png','oops.png'))
 
     def post(self):
         return self.process(False)
@@ -256,11 +263,29 @@ a:hover {color:red;text-decoration:none;}
 </html>
 """ % BS2GRPAdmin.BASE_URL)
 
+class NeedPermissionPage(webapp2.RequestHandler):
+    def get(self):
+        self.response.set_status(200)
+        self.response.headers['Content-Type'] = 'text/html'
+        self.response.out.write(
+"""
+<html>
+<head>
+</head>
+<body>
+<center>
+<h1>Sorry, You are not allowed to enter that page.</h1>
+</center>
+</body>
+</html>
+""")
+
 
 ## The variable 'aitsapp' is defined in app.yaml
 aitsapp = webapp2.WSGIApplication([
     (BS2GRPAdminAction.BASE_URL, BS2GRPAdminAction),
     (BS2GRPAdmin.BASE_URL, BS2GRPAdmin),
+    (r'/NeedPermissionPage/', NeedPermissionPage),
     (r'/bs2grpabout/', BS2GRPAbout),
     (r'/.*', BS2GRProxy),
     ])
