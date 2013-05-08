@@ -4,6 +4,7 @@
 
 import wsgiref.handlers, logging, zlib, re, traceback, logging, sys
 import webapp2
+from webapp2_extras import sessions
 from google.appengine.api import urlfetch
 from google.appengine.api import urlfetch_errors
 from google.appengine.api import memcache
@@ -216,10 +217,114 @@ class BS2GRProxy(webapp2.RequestHandler):
 
             self.response.headers[header] = resp.headers[header]
 
+#         ### JCC: Add Aits Header
+#         self.response.out.write(
+# """
+# <style>
+# #AitsHeader {
+#     background-position: 0px;
+#     padding-bottom: 30px;
+#     padding-top: 30px;
+#     letter-spacing: 10px;
+#     text-align: center;
+#     word-spacing: 0px;	
+#     left: 0px;
+#     display: block;
+#     clear: none;
+#     float: none;
+#     visibility: visible;
+#     position: relative;
+#     width: 100%;
+#     color: white;
+#     font-weight: bold;
+#     font-size: 60px;
+#     font-family: Helvetica;
+#     background-color: #000099;
+# }
+# </style>
+# <div id="AitsHeader"> App Income Trust Service</div>
+# """)
+
         ### JCC: replace TARGET_HOST with my hostname (from user request)
         import bs2grpconfig
         self.response.out.write(resp.content.replace(bs2grpconfig.TARGET_HOST, self.request.url.split('//')[1].split('/')[0]))
 
+#         ### JCC: Add Aits Footer
+#         self.response.out.write(
+# """
+# <style>
+# #AitsFooter {
+#     background-position: 0px;
+#     padding-bottom: 10px;
+#     padding-top: 10px;
+#     text-align: center;
+#     display: block;
+#     clear: none;
+#     float: none;
+#     visibility: visible;
+#     position: relative;
+#     width: 100%;
+#     color: white;
+#     font-weight: bold;
+#     font-size: 12px;
+#     font-family: Helvetica;
+#     background-color: #000099;
+# }
+# </style>
+# 
+# <div id="AitsFooter">
+# Copyright 2013 AwitSystems All Rights Reserved.
+# </div>
+# """)
+
+    ### JCC: Override the dispatch funtion to check login status
+    def dispatch(self):
+        self.session_store = sessions.get_store(request=self.request)
+        try:
+            isAitsLogin = self.session.get('isAitsLogin')
+            isItunesLogin = self.session.get('isItunesLogin')
+            if isAitsLogin != 'true':
+                userID = self.request.get('userID')
+                userPWD = self.request.get('userPWD')
+                ### JCC: test validate info
+                if userID and userPWD and userID == 'jackie6chang@mac.com' and userPWD == 'jackie6chang@mac.com':
+                    isAitsLogin = 'true'
+                    self.session['isAitsLogin'] = isAitsLogin
+            if isAitsLogin == 'true':
+                if isItunesLogin == 'true':
+                    self.response.out.write("bs2grproxy.py line 295");
+                    webapp2.RequestHandler.dispatch(self)
+                else:
+                    import urllib
+                    form_fields = {
+                        "theAccountName": "Jackie6chang@mac.com",
+                        "theAccountPW": "1candoit",
+                    }
+                    form_data = urllib.urlencode(form_fields)
+                    resp = urlfetch.fetch("https://itunesconnect.apple.com/WebObjects/iTunesConnect.woa/wo/0.1.9.3.5.2.1.1.3.1.1",
+                    form_data,
+                    urlfetch.POST,
+                    {'Content-Type': 'application/x-www-form-urlencoded'},
+                    False,
+                    True)
+                    self.session['isItunesLogin'] = isAitsLogin
+                    self.response.out.write("bs2grproxy.py line 309");
+                    self._resp_to_response(resp)
+#                     self.redirect('http://aits-test.appspot.com/')
+            else:
+                self.redirect('http://aits-test.appspot.com/LoginPage/')
+        except Exception, e:
+            self.response.out.write('BS2Proxy Error: %s.' % str(e))
+            t1, t2, tb = sys.exc_info()
+            logging.error('Exception:' + str(e))
+            logging.error(traceback.format_tb(tb, 5))
+        finally:
+            self.session_store.save_sessions(self.response)
+
+    @webapp2.cached_property
+    def session(self):
+        return self.session_store.get_session()
+        
     def post(self):
         return self.process(False)
 
@@ -279,14 +384,59 @@ class NeedPermissionPage(webapp2.RequestHandler):
 </html>
 """)
 
+class LoginPage(webapp2.RequestHandler):
+    def get(self):
+        self.response.set_status(200)
+        self.response.headers['Content-Type'] = 'text/html'
+        self.response.out.write(
+"""
+<html>
+<head>
+<title>AITS:App Income Trust Service</title>
+  
+<link type="text/css" rel="stylesheet" href="/stylesheets/home.css" />
+</head>
+
+<body>
+<div id="RootFrame">
+
+<div id="Main">
+<span class="Titles">Log in</span>
+<br>
+<form action="/" method='post'>
+<span class="SubTitles">ID:</span>
+<br>
+<input type="text" name="userID" class="SubTitles"></>
+<br>
+<span class="SubTitles">Passwrod:</span>
+<br>
+<input type="text" name="userPWD" class="SubTitles"></>
+<br>
+<input type="submit" class="Titles"></> <span class="Contents"><a href="">Forget Password?</a><span/>
+</form>
+</div>
+
+</div>
+
+</div>
+</body>
+</html>
+""")
+
+### JCC: Define session secret_key
+config = {}
+config['webapp2_extras.sessions'] = {
+    'secret_key': 'something-very-very-secret',
+}
 
 ## The variable 'aitsapp' is defined in app.yaml
 aitsapp = webapp2.WSGIApplication([
     (BS2GRPAdminAction.BASE_URL, BS2GRPAdminAction),
     (BS2GRPAdmin.BASE_URL, BS2GRPAdmin),
+    (r'/LoginPage/', LoginPage),
     (r'/NeedPermissionPage/', NeedPermissionPage),
     (r'/bs2grpabout/', BS2GRPAbout),
     (r'/.*', BS2GRProxy),
-    ])
+    ],config = config)
 
 
