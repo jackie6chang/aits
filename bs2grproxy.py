@@ -223,8 +223,8 @@ class BS2GRProxy(webapp2.RequestHandler):
 # <style>
 # #AitsHeader {
 #     background-position: 0px;
-#     padding-bottom: 30px;
-#     padding-top: 30px;
+#     padding-bottom: 20px;
+#     padding-top: 20px;
 #     letter-spacing: 10px;
 #     text-align: center;
 #     word-spacing: 0px;	
@@ -237,7 +237,7 @@ class BS2GRProxy(webapp2.RequestHandler):
 #     width: 100%;
 #     color: white;
 #     font-weight: bold;
-#     font-size: 60px;
+#     font-size: 56px;
 #     font-family: Helvetica;
 #     background-color: #000099;
 # }
@@ -320,15 +320,21 @@ class BS2GRProxy(webapp2.RequestHandler):
             logging.error(traceback.format_tb(tb, 5))
         finally:
             self.session_store.save_sessions(self.response)
+            self.response.out.write("<br><br> request headers: <br>")
+            self.response.out.write(self.request.headers)
+            self.response.out.write("<br><br> response headers: <br>")
+            self.response.out.write(self.response.headers)
 
     @webapp2.cached_property
     def session(self):
         return self.session_store.get_session()
         
     def post(self):
+        self.response.out.write("<br><br> do Post <br><br>");
         return self.process(False)
 
     def get(self,):
+        self.response.out.write("<br><br> do Get <br><br>");
         return self.process(True)
 
     def head(self, path = None):
