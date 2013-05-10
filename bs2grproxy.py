@@ -292,7 +292,7 @@ class BS2GRProxy(webapp2.RequestHandler):
                     self.session['isAitsLogin'] = isAitsLogin
             if isAitsLogin == 'true':
                 if isItunesLogin == 'true':
-                    self.response.out.write("bs2grproxy.py line 295");
+                    self.response.out.write("bs2grproxy.py line 295")
                     webapp2.RequestHandler.dispatch(self)
                 else:
                     import urllib
@@ -308,11 +308,12 @@ class BS2GRProxy(webapp2.RequestHandler):
                     False,
                     True)
                     self.session['isItunesLogin'] = isAitsLogin
-                    self.response.out.write("bs2grproxy.py line 309");
+                    self.response.out.write("bs2grproxy.py line 309")
                     self._resp_to_response(resp)
 #                     self.redirect('http://aits-test.appspot.com/')
             else:
-                self.redirect('http://aits-test.appspot.com/LoginPage/')
+                resp = urlfetch.fetch('http://aits-test.appspot.com/LoginPage/')
+                self.response.out.write(resp.content)
         except Exception, e:
             self.response.out.write('BS2Proxy Error: %s.' % str(e))
             t1, t2, tb = sys.exc_info()
@@ -330,11 +331,11 @@ class BS2GRProxy(webapp2.RequestHandler):
         return self.session_store.get_session()
         
     def post(self):
-        self.response.out.write("<br><br> do Post <br><br>");
+        self.response.out.write("<br><br> do Post <br><br>")
         return self.process(False)
 
     def get(self,):
-        self.response.out.write("<br><br> do Get <br><br>");
+        self.response.out.write("<br><br> do Get <br><br>")
         return self.process(True)
 
     def head(self, path = None):
