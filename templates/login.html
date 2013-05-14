@@ -11,7 +11,13 @@
 <div id="Main">
 <span class="Titles">Log in</span>
 <br>
+{% if errorMessage %}
+<br>
+<span class="Warings">{{ errorMessage }}</span>
+<br>
+{% endif %}
 <form action="/" method='post'>
+<br>
 <span class="SubTitles">ID:</span>
 <br>
 <input type="text" name="userID" class="SubTitles" value="{{ userID }}"></>
@@ -19,6 +25,7 @@
 <span class="SubTitles">Passwrod:</span>
 <br>
 <input type="text" name="userPWD" class="SubTitles"></>
+<br>
 <br>
 <input type="submit" class="Titles"></> <span class="Contents"><a href="">Forget Password?</a><span/>
 </form>

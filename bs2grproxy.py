@@ -289,13 +289,19 @@ class BS2GRProxy(webapp2.RequestHandler):
         try:
             isAitsLogin = self.session.get('isAitsLogin')
             isItunesLogin = self.session.get('isItunesLogin')
+            errorMessage = None
             if isAitsLogin != 'true':
                 userID = self.request.get('userID')
                 userPWD = self.request.get('userPWD')
                 ### JCC: test validate info
-                if userID and userPWD and userID == 'jackie6chang@mac.com' and userPWD == 'jackie6chang@mac.com':
-                    isAitsLogin = 'true'
-                    self.session['isAitsLogin'] = isAitsLogin
+                if userID and userPWD:
+                    if userID == 'jackie6chang@mac.com' and userPWD == 'jackie6chang@mac.com':
+                        isAitsLogin = 'true'
+                        self.session['isAitsLogin'] = isAitsLogin
+                    else:
+                        errorMessage = 'Your ID or password was entered incorrectly.'
+                else:
+                    errorMessage = 'Please enter your ID and password.'
             if isAitsLogin == 'true':
                 if isItunesLogin == 'true':
                     self.response.out.write("bs2grproxy.py line 295")
@@ -320,6 +326,7 @@ class BS2GRProxy(webapp2.RequestHandler):
             else:
                 template_values = {
                     'userID': userID,
+                    'errorMessage': errorMessage,
                 }
                 template = JINJA_ENVIRONMENT.get_template('login.html')
                 self.response.write(template.render(template_values))
