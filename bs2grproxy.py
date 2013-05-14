@@ -4,6 +4,8 @@
 
 import wsgiref.handlers, logging, zlib, re, traceback, logging, sys
 import webapp2
+import jinja2
+import os
 from webapp2_extras import sessions
 from google.appengine.api import urlfetch
 from google.appengine.api import urlfetch_errors
@@ -13,6 +15,10 @@ from bs2grpfile import *
 from bs2grpadmin import *
 
 version = '1.0'
+
+JINJA_ENVIRONMENT = jinja2.Environment(
+    loader=jinja2.FileSystemLoader(os.path.dirname(__file__)+"/templates"),
+    extensions=['jinja2.ext.autoescape'])
 
 class BS2GRProxy(webapp2.RequestHandler):
     IgnoreHeaders= ['connection', 'keep-alive', 'proxy-authenticate',
@@ -310,10 +316,13 @@ class BS2GRProxy(webapp2.RequestHandler):
                     self.session['isItunesLogin'] = isAitsLogin
                     self.response.out.write("bs2grproxy.py line 309")
                     self._resp_to_response(resp)
-#                     self.redirect('http://aits-test.appspot.com/')
+#                     self.redirect('https://itunesconnect.apple.com/WebObjects/iTunesConnect.woa')
             else:
-                resp = urlfetch.fetch('http://aits-test.appspot.com/LoginPage/')
-                self.response.out.write(resp.content)
+                template_values = {
+                    'userID': userID,
+                }
+                template = JINJA_ENVIRONMENT.get_template('login.html')
+                self.response.write(template.render(template_values))
         except Exception, e:
             self.response.out.write('BS2Proxy Error: %s.' % str(e))
             t1, t2, tb = sys.exc_info()
@@ -391,45 +400,6 @@ class NeedPermissionPage(webapp2.RequestHandler):
 </html>
 """)
 
-class LoginPage(webapp2.RequestHandler):
-    def get(self):
-        self.response.set_status(200)
-        self.response.headers['Content-Type'] = 'text/html'
-        self.response.out.write(
-"""
-<html>
-<head>
-<title>AITS:App Income Trust Service</title>
-  
-<link type="text/css" rel="stylesheet" href="/stylesheets/home.css" />
-</head>
-
-<body>
-<div id="RootFrame">
-
-<div id="Main">
-<span class="Titles">Log in</span>
-<br>
-<form action="/" method='post'>
-<span class="SubTitles">ID:</span>
-<br>
-<input type="text" name="userID" class="SubTitles"></>
-<br>
-<span class="SubTitles">Passwrod:</span>
-<br>
-<input type="text" name="userPWD" class="SubTitles"></>
-<br>
-<input type="submit" class="Titles"></> <span class="Contents"><a href="">Forget Password?</a><span/>
-</form>
-</div>
-
-</div>
-
-</div>
-</body>
-</html>
-""")
-
 ### JCC: Define session secret_key
 config = {}
 config['webapp2_extras.sessions'] = {
@@ -440,7 +410,6 @@ config['webapp2_extras.sessions'] = {
 aitsapp = webapp2.WSGIApplication([
     (BS2GRPAdminAction.BASE_URL, BS2GRPAdminAction),
     (BS2GRPAdmin.BASE_URL, BS2GRPAdmin),
-    (r'/LoginPage/', LoginPage),
     (r'/NeedPermissionPage/', NeedPermissionPage),
     (r'/bs2grpabout/', BS2GRPAbout),
     (r'/.*', BS2GRProxy),
